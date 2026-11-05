@@ -749,6 +749,7 @@ const SFX = {
   flip(i = 0) { osc({ type: "triangle", f: 900 + (i % 7) * 80, f2: 600, d: .06, v: .035, a: .002 }); },
   tick() { osc({ type: "triangle", f: 1500, f2: 1100, d: .03, v: .03, a: .001 }); }
 };
+Object.keys(SFX).forEach(k => { const f = SFX[k]; SFX[k] = (...args) => { try { return f(...args); } catch (e) { console.warn(e); } }; });
 function setMuted(m) {
   muted = m; try { localStorage.setItem("sy10:muted", m ? "1" : "0"); } catch {}
   if (master) master.gain.setTargetAtTime(m ? 0 : .9, ac.currentTime, .02);
@@ -945,18 +946,31 @@ async function openQuestion(tile) {
   refreshTeams(false); renderActions();
   qContent.style.opacity = 0;
   qEl.hidden = false; document.body.classList.add("inq");
-  fitText();
   const face = $(".q-face");
   face.style.opacity = 1;
-  SFX.whoosh();
-  const from = tileRectToQ(tile);
-  const anim = qEl.animate([{ transform: from }, { transform: "none" }], { duration: reduce ? 1 : 680, easing: "cubic-bezier(.25,1.18,.4,1)" });
-  face.animate([{ opacity: 1 }, { opacity: 1, offset: .45 }, { opacity: 0 }], { duration: reduce ? 1 : 680, fill: "forwards" });
-  await anim.finished.catch(() => {});
-  face.style.opacity = 0;
-  qContent.style.opacity = 1;
-  qContent.animate([{ opacity: 0, transform: "scale(.96)" }, { opacity: 1, transform: "none" }], { duration: 350, easing: "ease-out" });
-  startTyping();
+  const my = cur;
+  let shownContent = false;
+  const showContent = () => {
+    if (shownContent || cur !== my || !cur) return; shownContent = true;
+    clearTimeout(safety);
+    face.getAnimations().forEach(a => { try { a.cancel(); } catch {} });
+    qEl.getAnimations().forEach(a => { try { a.finish(); } catch {} });
+    face.style.opacity = 0;
+    qContent.style.opacity = 1;
+    try { qContent.animate([{ opacity: 0, transform: "scale(.96)" }, { opacity: 1, transform: "none" }], { duration: 350, easing: "ease-out" }); } catch {}
+    startTyping();
+  };
+  // safety net: whatever happens with the animation, the question always appears
+  const safety = setTimeout(showContent, reduce ? 50 : 900);
+  try {
+    fitText();
+    SFX.whoosh();
+    const dur = reduce ? 1 : 680;
+    const anim = qEl.animate([{ transform: tileRectToQ(tile) }, { transform: "none" }], { duration: dur, easing: "cubic-bezier(.25,1.18,.4,1)" });
+    face.animate([{ opacity: 1 }, { opacity: 1, offset: .45 }, { opacity: 0 }], { duration: dur, fill: "forwards" });
+    await Promise.race([anim.finished.catch(() => {}), sleep(dur + 150)]);
+  } catch (e) { console.warn(e); }
+  showContent();
 }
 function buildTyping(text) {
   const p = $("#qText"); p.textContent = "";
@@ -1052,11 +1066,12 @@ async function closeQuestion() {
   if (cur.startTurn !== null) { state.turn = 1 - cur.startTurn; persist("state"); }
   if (touched && !(state.tiles[key(cur.c, cur.r)] || {}).done) commitTile({ marks: cur.marks });
   const tile = cur.tile;
-  await qContent.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" }).finished.catch(() => {});
+  try { await Promise.race([qContent.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" }).finished.catch(() => {}), sleep(300)]); } catch {}
   const face = $(".q-face"); $("#qFacePts").textContent = cur.q.points;
   face.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: "forwards" });
   SFX.whoosh();
-  await qEl.animate([{ transform: "none" }, { transform: tileRectToQ(tile) }], { duration: reduce ? 1 : 520, easing: "cubic-bezier(.55,0,.7,.2)" }).finished.catch(() => {});
+  try { await Promise.race([qEl.animate([{ transform: "none" }, { transform: tileRectToQ(tile) }], { duration: reduce ? 1 : 520, easing: "cubic-bezier(.55,0,.7,.2)" }).finished.catch(() => {}), sleep(700)]); } catch {}
+  qEl.getAnimations().forEach(a => { try { a.cancel(); } catch {} });
   qEl.hidden = true; document.body.classList.remove("inq"); face.getAnimations().forEach(a => a.cancel()); qContent.getAnimations().forEach(a => a.cancel()); qContent.style.opacity = 1;
   $$(".banner,.plus", qEl).forEach(b => b.remove());
   cur = null; screen = "board";
@@ -1208,6 +1223,7 @@ $$('[data-role="qplate"]').forEach(p => p.addEventListener("click", () => { if (
 $$("[data-adj]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); const [i, d] = b.dataset.adj.split(":").map(Number); state.adjust[i] = (+state.adjust[i] || 0) + d; persist("state"); refreshTeams(true); }));
 
 /* ---------- wiring ---------- */
+qEl.addEventListener("pointerdown", () => { if (cur && !cur.closing && qContent.style.opacity === "0") { qContent.style.opacity = 1; $(".q-face").style.opacity = 0; startTyping(); } });
 grid.addEventListener("click", e => { const t = e.target.closest(".tile"); if (!t || t.classList.contains("done")) return; openQuestion(t).then(() => {}); });
 $("#startBtn").onclick = startGame;
 $("#gearBtn").onclick = openSettings;
