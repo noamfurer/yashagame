@@ -131,8 +131,8 @@ body.party .bulb{animation-duration:.45s}
 #board{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);padding:calc(var(--u)*1.1) calc(var(--u)*1.6) calc(var(--u)*.8)}
 #board.entering{animation:boardIn .7s both cubic-bezier(.2,1.2,.4,1)}
 @keyframes boardIn{from{opacity:0;transform:scale(.88)}}
-.scorebar{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:calc(var(--u)*1.6);padding-inline:calc(var(--u)*10)}
-.team{position:relative;display:flex;align-items:center;gap:calc(var(--u)*1.2);padding:calc(var(--u)*.5) calc(var(--u)*1.6);border-radius:calc(var(--u)*1.2);
+.scorebar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:stretch;gap:calc(var(--u)*1.6);padding-inline:calc(var(--u)*10)}
+.team{position:relative;min-width:0;display:flex;align-items:center;gap:calc(var(--u)*1.2);padding:calc(var(--u)*.5) calc(var(--u)*1.6);border-radius:calc(var(--u)*1.2);
   background:linear-gradient(180deg,rgba(6,12,90,.92),rgba(3,6,50,.92));
   box-shadow:inset 0 0 0 calc(var(--u)*.18) color-mix(in srgb,var(--tcol) 70%,transparent),0 calc(var(--u)*.4) calc(var(--u)*1.2) rgba(0,0,0,.45);
   transition:box-shadow .35s, transform .35s cubic-bezier(.3,1.6,.5,1);cursor:pointer}
@@ -211,7 +211,7 @@ body.party .bulb{animation-duration:.45s}
 @keyframes spin{to{transform:rotate(360deg)}}
 .q-face{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#1b30e6,#0a1592);font-size:20vmin;pointer-events:none}
 .q-content{position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr auto auto;gap:calc(var(--u)*1);padding:calc(var(--u)*1.2) calc(var(--u)*2.4) calc(var(--u)*1)}
-.q-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:calc(var(--u)*1.5);padding-inline:calc(var(--u)*9.5)}
+.q-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:calc(var(--u)*1.5);padding-inline:calc(var(--u)*9.5)}
 .q-top .team{padding:calc(var(--u)*.35) calc(var(--u)*1.2);background:rgba(0,0,0,.35)}
 .q-top .team .tname{font-size:calc(var(--u)*2.1);cursor:pointer}
 .q-top .team .tscore{font-size:calc(var(--u)*3.4)}
@@ -533,7 +533,7 @@ body.party .bulb{animation-duration:.45s}
    השאלות — כאן עורכים. color: blue = יהלי, purple = שחר, green = יהלי או שחר?
    (אפשר לערוך גם מתוך האתר: גלגל השיניים בתחתית, סיסמה 102030)
    ===================================================================== */
-const QUESTIONS_VERSION = 2; // מעלים את המספר אחרי עריכה כאן בקוד, כדי שהשאלות החדשות יחליפו את השמורות
+const QUESTIONS_VERSION = 3; // מעלים את המספר אחרי עריכה כאן בקוד, כדי שהשאלות החדשות יחליפו את השמורות
 const QUESTIONS = [
   { category: "בית ספר והפסקות", emoji: "🏫", questions: [
     { points: 100, color: "blue",   q: "כשהצלצול להפסקה מגיע, לאן יהלי רץ ראשון?", a: "למגרש" },
@@ -543,10 +543,6 @@ const QUESTIONS = [
     { points: 100, color: "green",  q: "מי מהשניים לא אוהב ברוקולי?", a: "יהלי" },
     { points: 200, color: "blue",   q: "במכולת, איזה חטיף יהלי יבחר כמעט תמיד?", a: "פוף" },
     { points: 300, color: "purple", q: "איזו ארוחה שחר הייתה אוכלת כל יום אם רק הייתה יכולה?", a: "טופו שווארמה" } ] },
-  { category: "כינויים", emoji: "🗣️", questions: [
-    { points: 100, color: "green",  q: "מי מהשניים מתעורר במצב רוח טוב יותר?", a: "יהלי" },
-    { points: 200, color: "purple", q: "מה הכינוי של שחר?", a: "שח" },
-    { points: 300, color: "blue",   q: "מלבד \"יהלי\", איך הכי הרבה קוראים לו?", a: "יהלול" } ] },
   { category: "כשהיו קטנים", emoji: "👶", questions: [
     { points: 100, color: "green",  q: "מי מהשניים נולד ראשון, ובכמה דקות?", a: "שחר, בחמש דקות" },
     { points: 200, color: "blue",   q: "מה הייתה המילה הראשונה של יהלי?", a: "אבא" },
